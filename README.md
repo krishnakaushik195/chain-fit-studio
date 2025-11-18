@@ -54,11 +54,19 @@ npm run dev
 
 This project is built with:
 
+**Frontend:**
 - Vite
 - TypeScript
 - React
 - shadcn-ui
 - Tailwind CSS
+- MediaPipe Face Mesh
+
+**Backend:**
+- Flask (Python)
+- Flask-CORS
+
+This is a monorepo containing both frontend and backend code. See [SETUP.md](./SETUP.md) for detailed setup instructions.
 
 ## How can I deploy this project?
 
