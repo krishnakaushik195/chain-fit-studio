@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 const Index = () => {
   const [selectedChainIndex, setSelectedChainIndex] = useState<number | null>(null);
   const [chainSize, setChainSize] = useState(1.0);
-  const [verticalPosition, setVerticalPosition] = useState(0.2);
+  const [verticalPosition, setVerticalPosition] = useState(0.5);
   const { data, isLoading, error } = useChains();
   const { toast } = useToast();
 
@@ -37,23 +37,23 @@ const Index = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4">
-          <h1 className="text-2xl md:text-3xl font-bold text-gold">
+    <div className="flex flex-col h-screen bg-background overflow-hidden">
+      {/* Header - Compact on mobile */}
+      <header className="border-b border-border bg-card shrink-0">
+        <div className="px-3 py-2 md:px-4 md:py-4">
+          <h1 className="text-lg md:text-2xl lg:text-3xl font-bold text-gold">
             Chain Fit Studio
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-xs md:text-sm text-muted-foreground mt-0.5 md:mt-1">
             Virtual Try-On Experience
           </p>
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-        {/* Camera View */}
-        <div className="flex-1 relative">
+      {/* Main Content - Mobile Optimized */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Camera View - Takes full available space on mobile */}
+        <div className="flex-1 relative min-h-0">
           <CameraView
             selectedChain={selectedChain}
             onCapture={handleCapture}
@@ -62,24 +62,24 @@ const Index = () => {
           />
         </div>
 
-        {/* Chain Gallery Sidebar */}
-        <aside className="w-full md:w-80 border-t md:border-t-0 md:border-l border-border bg-card flex flex-col">
+        {/* Controls - Bottom sheet on mobile, sidebar on desktop */}
+        <aside className="h-auto max-h-[45vh] md:max-h-none md:absolute md:right-0 md:top-0 md:bottom-0 md:w-80 border-t md:border-t-0 md:border-l border-border bg-card flex flex-col shrink-0">
           {isLoading ? (
-            <div className="flex items-center justify-center h-full">
+            <div className="flex items-center justify-center h-32 md:h-full">
               <Loader2 className="w-8 h-8 text-gold animate-spin" />
             </div>
           ) : error ? (
-            <div className="flex items-center justify-center h-full p-6">
+            <div className="flex items-center justify-center h-32 md:h-full p-4 md:p-6">
               <div className="text-center">
-                <p className="text-destructive mb-2">Failed to load chains</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-destructive mb-2 text-sm md:text-base">Failed to load chains</p>
+                <p className="text-xs md:text-sm text-muted-foreground">
                   Please check your connection
                 </p>
               </div>
             </div>
           ) : (
             <>
-              <div className="flex-1 overflow-hidden">
+              <div className="flex-1 overflow-auto min-h-0">
                 <ChainGallery
                   chains={data?.chains || []}
                   selectedChainIndex={selectedChainIndex}
@@ -88,12 +88,14 @@ const Index = () => {
                   onNext={handleNext}
                 />
               </div>
-              <AdjustmentControls
-                chainSize={chainSize}
-                verticalPosition={verticalPosition}
-                onChainSizeChange={setChainSize}
-                onVerticalPositionChange={setVerticalPosition}
-              />
+              <div className="shrink-0">
+                <AdjustmentControls
+                  chainSize={chainSize}
+                  verticalPosition={verticalPosition}
+                  onChainSizeChange={setChainSize}
+                  onVerticalPositionChange={setVerticalPosition}
+                />
+              </div>
             </>
           )}
         </aside>
