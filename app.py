@@ -54,10 +54,24 @@ print("="*50)
 @app.route('/<path:path>')
 def serve(path):
     """Serve React static files with SPA fallback"""
-    if path != '' and os.path.exists(os.path.join(app.static_folder, path)):
+    # Debug: Print requested path and static folder
+    print(f"DEBUG: Requested path='{path}', static_folder='{app.static_folder}'")
+    
+    full_path = os.path.join(app.static_folder, path)
+    print(f"DEBUG: Full path to check='{full_path}'")
+    
+    if path != '' and os.path.exists(full_path):
+        print(f"DEBUG: Serving file from {full_path}")
         return send_from_directory(app.static_folder, path)
     else:
-        return send_from_directory(app.static_folder, 'index.html')
+        index_path = os.path.join(app.static_folder, 'index.html')
+        print(f"DEBUG: Falling back to index.html at {index_path}")
+        if os.path.exists(index_path):
+            print("DEBUG: index.html exists, serving it")
+            return send_from_directory(app.static_folder, 'index.html')
+        else:
+            print(f"ERROR: index.html not found at {index_path}! Check build output.")
+            return "index.html not found - Build issue?", 404
 
 @app.route('/api/chains')
 def get_chains():
@@ -95,9 +109,10 @@ if __name__ == '__main__':
     print("\n" + "="*50)
     print("CHAIN FIT STUDIO - SERVER STARTING")
     print("="*50)
+    print(f"Static folder set to: {app.static_folder}")
     print("\n🌐 Server will be available at:")
     print("   Local: http://localhost:5000")
-    print("   Production: https://gold-chain-selection.onrender.com")  # ← Update with your Render URL
+    print("   Production: https://gold-studio.onrender.com")
     print("\n📝 Features:")
     print("   ✓ Static React SPA serving")
     print("   ✓ Browser-based camera processing")
