@@ -4,8 +4,9 @@
 A production-ready virtual try-on experience for chains/necklaces with real-time face mesh detection.
 
 ## Architecture
+- **Monorepo Structure**: Frontend and Backend in the same repository
 - **Frontend**: React + TypeScript + Vite
-- **Backend**: Flask (Python)
+- **Backend**: Flask (Python) - located in root directory
 - **Face Detection**: MediaPipe Face Mesh
 - **Styling**: Tailwind CSS with custom design system
 
@@ -20,34 +21,26 @@ A production-ready virtual try-on experience for chains/necklaces with real-time
 
 1. You MUST run the React app locally (not in Lovable preview)
 2. The Lovable preview cannot connect to `localhost:5000` due to browser security
-3. Follow the steps below to run both backend and frontend locally
+3. Both frontend and backend code are now in the same repository
+4. Follow the steps below to run both backend and frontend locally
 
 ## Backend Setup (Flask)
 
 1. **Install Python dependencies**:
 ```bash
-pip install flask flask-cors
+pip install -r requirements.txt
 ```
 
-2. **Update Flask app.py to enable CORS**:
-Add this to your Flask code:
-```python
-from flask_cors import CORS
-
-app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
-```
-
-3. **Create chains folder**:
+2. **Create chains folder**:
 ```bash
 mkdir chains
 ```
 
-4. **Add chain images**:
+3. **Add chain images**:
    - Place PNG/JPG images of chains in the `chains/` folder
    - Name them descriptively (e.g., `gold-chain.png`, `silver-pendant.png`)
 
-5. **Run Flask server**:
+4. **Run Flask server** (from project root):
 ```bash
 python app.py
 ```
@@ -56,21 +49,19 @@ Server will start at `http://localhost:5000`
 
 ## Frontend Setup (React)
 
-1. **Download the project code** (from Lovable: click on project name → Download Code)
-
-2. **Install dependencies**:
+1. **Install dependencies** (if not already installed):
 ```bash
 npm install
 ```
 
-3. **Configure API URL**:
+2. **Configure API URL**:
    - Create a `.env` file in the root directory
    - Add this line:
    ```
    VITE_API_URL=http://localhost:5000
    ```
 
-4. **Start development server**:
+3. **Start development server**:
 ```bash
 npm run dev
 ```
