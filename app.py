@@ -1,13 +1,13 @@
 """
-Chain Fit Studio - Flask Backend (Browser Camera Version)
-This version ONLY serves the API - HTML is already in templates/
+Chain Fit Studio - Flask Backend (React Static SPA Version)
+Serves built React app from chains/dist/ + API endpoints
 """
 
-from flask import Flask, render_template, jsonify
+from flask import Flask, send_from_directory, jsonify
 import os
 import base64
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='chains/dist', static_url_path='')
 
 # ================== CONFIG ==================
 CHAIN_FOLDER = "chains"
@@ -50,10 +50,14 @@ print("="*50)
 
 # ================== ROUTES ==================
 
-@app.route('/')
-def index():
-    """Serve the main HTML page"""
-    return render_template('index.html')
+@app.route('/', defaults={'path': 'index.html'})
+@app.route('/<path:path>')
+def serve(path):
+    """Serve React static files with SPA fallback"""
+    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
 
 @app.route('/api/chains')
 def get_chains():
@@ -100,6 +104,7 @@ if __name__ == '__main__':
     print("   Local: http://localhost:5000")
     print("   Production: https://your-app.onrender.com")
     print("\n📝 Features:")
+    print("   ✓ Static React SPA serving")
     print("   ✓ Browser-based camera processing")
     print("   ✓ Real-time face mesh detection")
     print("   ✓ Virtual chain try-on")
