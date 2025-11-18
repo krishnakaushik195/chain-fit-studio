@@ -22,9 +22,20 @@ export const CameraView = ({
   const chainImageRef = useRef<HTMLImageElement | null>(null);
   const faceMeshRef = useRef<FaceMesh | null>(null);
   const cameraRef = useRef<Camera | null>(null);
+  const chainSizeRef = useRef(chainSize);
+  const verticalPositionRef = useRef(verticalPosition);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCameraReady, setIsCameraReady] = useState(false);
+
+  // Update refs when props change
+  useEffect(() => {
+    chainSizeRef.current = chainSize;
+  }, [chainSize]);
+
+  useEffect(() => {
+    verticalPositionRef.current = verticalPosition;
+  }, [verticalPosition]);
 
   useEffect(() => {
     if (selectedChain) {
@@ -129,10 +140,10 @@ export const CameraView = ({
       if (chinCenter && leftJaw && rightJaw) {
         const neckCenterX = chinCenter.x * canvas.width;
         const baseOffset = chinCenter.y * canvas.height + 40;
-        const neckCenterY = baseOffset + (verticalPosition * 100); // Apply vertical adjustment
+        const neckCenterY = baseOffset + (verticalPositionRef.current * 100); // Apply vertical adjustment
         
         const baseNeckWidth = Math.abs(rightJaw.x - leftJaw.x) * canvas.width * 1.2;
-        const neckWidth = baseNeckWidth * chainSize; // Apply size adjustment
+        const neckWidth = baseNeckWidth * chainSizeRef.current; // Apply size adjustment
         const chainHeight = (chainImageRef.current.height / chainImageRef.current.width) * neckWidth;
 
         ctx.globalAlpha = 0.9;
