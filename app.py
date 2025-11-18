@@ -1,131 +1,96 @@
 """
-Chain Fit Studio - Flask Backend (React Static SPA Version)
-Serves built React app from chains/dist/ + API endpoints
+Chain Fit Studio - FINAL WORKING VERSION FOR RENDER
+Serves React app from chains/dist + loads chain images as base64
 """
 
 from flask import Flask, send_from_directory, jsonify
 import os
 import base64
 
-app = Flask(__name__, static_folder='chains/dist', static_url_path='')
+# === ABSOLUTE PATH FIX - THIS IS THE KEY ===
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+STATIC_FOLDER = os.path.join(BASE_DIR, "chains", "dist")
 
-# ================== CONFIG ==================
-CHAIN_FOLDER = "chains"
-os.makedirs(CHAIN_FOLDER, exist_ok=True)
+print("=" * 60)
+print("CHAIN FIT STUDIO - STARTING")
+print(f"Project root: {BASE_DIR}")
+print(f"Static folder: {STATIC_FOLDER}")
 
-# Load chains and convert to base64
+# Verify build exists
+if os.path.exists(STATIC_FOLDER):
+    files = os.listdir(STATIC_FOLDER)
+    print(f"Build folder found! Contents: {files}")
+    index_path = os.path.join(STATIC_FOLDER, "index.html")
+    if os.path.exists(index_path):
+        print("index.html FOUND → Website will load perfectly!")
+    else:
+        print("WARNING: index.html missing in dist!")
+else:
+    short_path = os.path.join("chains", "dist")
+    print(f"ERROR: Build folder NOT found at {short_path}")
+    print("   Make sure 'npm run build' runs in 'chains/' folder!")
+print("=" * 60)
+
+app = Flask(__name__, static_folder=STATIC_FOLDER, static_url_path='')
+
+# Load chains from chains/ folder (images only, not in dist)
+CHAIN_FOLDER = os.path.join(BASE_DIR, "chains")
 chains_data = []
 chain_names = []
 
-print("="*50)
-print("CHAIN FIT STUDIO - Loading chains...")
-print("="*50)
-
+print("Loading chain images from:", CHAIN_FOLDER)
 for file in sorted(os.listdir(CHAIN_FOLDER)):
     if file.lower().endswith(('.png', '.jpg', '.jpeg')):
-        path = os.path.join(CHAIN_FOLDER, file)
-        try:
-            with open(path, 'rb') as f:
-                img_data = base64.b64encode(f.read()).decode()
-                # Detect image type
-                ext = file.lower().split('.')[-1]
-                mime_type = f"image/{ext}" if ext in ['png', 'jpg', 'jpeg'] else "image/png"
-                
-                chains_data.append({
-                    'name': os.path.splitext(file)[0],
-                    'data': f"data:{mime_type};base64,{img_data}"
-                })
-                chain_names.append(os.path.splitext(file)[0])
-                print(f"   ✓ Loaded: {file}")
-        except Exception as e:
-            print(f"   ✗ Error loading {file}: {e}")
+        filepath = os.path.join(CHAIN_FOLDER, file)
+        if os.path.isfile(filepath):
+            try:
+                with open(filepath, "rb") as f:
+                    img_data = base64.b64encode(f.read()).decode()
+                    ext = file.split(".")[-1].lower()
+                    mime = "image/png" if ext == "png" else "image/jpeg"
+                    chains_data.append({
+                        "name": os.path.splitext(file)[0],
+                        "data": f"data:{mime};base64,{img_data}"
+                    })
+                    chain_names.append(os.path.splitext(file)[0])
+                    print(f"   Loaded: {file}")
+            except Exception as e:
+                print(f"   Failed to load {file}: {e}")
 
-if not chains_data:
-    print("\n⚠️  WARNING: No chain images found in 'chains/' folder!")
-    print("   Please add PNG/JPG images to the 'chains/' folder.\n")
-else:
-    print(f"\n✓ Total chains loaded: {len(chains_data)}\n")
+print(f"Total chains loaded: {len(chains_data)}")
+print("=" * 60)
 
-print("="*50)
-
-# ================== ROUTES ==================
-
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
+# === ROUTES ===
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
 def serve(path):
-    """Serve React static files with SPA fallback"""
-    # Debug: Print requested path and static folder
-    print(f"DEBUG: Requested path='{path}', static_folder='{app.static_folder}'")
-    
-    full_path = os.path.join(app.static_folder, path)
-    print(f"DEBUG: Full path to check='{full_path}'")
-    
-    if path != '' and os.path.exists(full_path):
-        print(f"DEBUG: Serving file from {full_path}")
+    if path and os.path.exists(os.path.join(app.static_folder, path)):
         return send_from_directory(app.static_folder, path)
     else:
-        index_path = os.path.join(app.static_folder, 'index.html')
-        print(f"DEBUG: Falling back to index.html at {index_path}")
+        index_path = os.path.join(app.static_folder, "index.html")
         if os.path.exists(index_path):
-            print("DEBUG: index.html exists, serving it")
-            return send_from_directory(app.static_folder, 'index.html')
+            return send_from_directory(app.static_folder, "index.html")
         else:
-            print(f"ERROR: index.html not found at {index_path}! Check build output.")
-            return "index.html not found - Build issue?", 404
+            return "Build missing! Run 'npm run build' in chains/", 500
 
-@app.route('/api/chains')
+@app.route("/api/chains")
 def get_chains():
-    """API endpoint to get all chain images as base64"""
-    return jsonify({
-        'chains': chains_data,
-        'names': chain_names
-    })
+    return jsonify({"chains": chains_data, "names": chain_names})
 
-@app.route('/health')
+@app.route("/health")
 def health():
-    """Health check endpoint"""
-    return jsonify({
-        'status': 'ok',
-        'chains_loaded': len(chains_data)
-    })
+    return jsonify({"status": "ok", "chains": len(chains_data)})
 
-# Security headers
+# Camera permission headers
 @app.after_request
-def add_security_headers(response):
-    """Add security headers for camera access"""
-    response.headers['Permissions-Policy'] = 'camera=*'
-    response.headers['Access-Control-Allow-Origin'] = '*'
+def add_headers(response):
+    response.headers["Permissions-Policy"] = "camera=*, microphone=*"
+    response.headers["Access-Control-Allow-Origin"] = "*"
     return response
 
-# Error handlers (only 500, no 404 override for SPA)
-@app.errorhandler(500)
-def server_error(e):
-    """Handle 500 errors"""
-    return jsonify({'error': 'Internal server error'}), 500
-
-# ================== MAIN ==================
-
-if __name__ == '__main__':
-    print("\n" + "="*50)
-    print("CHAIN FIT STUDIO - SERVER STARTING")
-    print("="*50)
-    print(f"Static folder set to: {app.static_folder}")
-    print("\n🌐 Server will be available at:")
-    print("   Local: http://localhost:5000")
-    print("   Production: https://gold-studio.onrender.com")
-    print("\n📝 Features:")
-    print("   ✓ Static React SPA serving")
-    print("   ✓ Browser-based camera processing")
-    print("   ✓ Real-time face mesh detection")
-    print("   ✓ Virtual chain try-on")
-    print("\n" + "="*50 + "\n")
-    
-    # Get port from environment variable (for Render deployment)
-    port = int(os.environ.get('PORT', 5000))
-    
-    app.run(
-        debug=False,
-        threaded=True,
-        host='0.0.0.0',
-        port=port
-    )
+# === START SERVER ===
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    print(f"Server starting on http://localhost:{port}")
+    print("Open your Render URL to see Chain Fit Studio!")
+    app.run(host="0.0.0.0", port=port, debug=False)
