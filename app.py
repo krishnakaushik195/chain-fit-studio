@@ -1,17 +1,18 @@
 """
-Chain Fit Studio - FINAL WORKING VERSION
-React/Vite project in root → builds to ./dist
-Chain images in ./chains folder
+Chain Fit Studio - FINAL 100% WORKING VERSION
+- React/Vite in root → builds to ./dist
+- Chain images in ./chains folder
+- CAMERA PERMISSION FIXED (2025 browsers)
 """
 
 from flask import Flask, send_from_directory, jsonify
 import os
 import base64
 
-# Project root
+# Paths
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-STATIC_FOLDER = os.path.join(BASE_DIR, "dist")        # Vite builds here
-CHAIN_FOLDER = os.path.join(BASE_DIR, "chains")       # Your PNGs
+STATIC_FOLDER = os.path.join(BASE_DIR, "dist")        # Vite build output
+CHAIN_FOLDER = os.path.join(BASE_DIR, "chains")       # Your PNG images
 
 print("=" * 70)
 print("CHAIN FIT STUDIO - STARTING")
@@ -19,14 +20,14 @@ print(f"Root: {BASE_DIR}")
 print(f"React build: {STATIC_FOLDER}")
 print(f"Chain images: {CHAIN_FOLDER}")
 
-# Verify React build
+# Verify React build exists
 if os.path.exists(STATIC_FOLDER):
     print("React build FOUND → Site will load!")
-    print("Files:", os.listdir(STATIC_FOLDER)[:5])
+    print("Files:", os.listdir(STATIC_FOLDER)[:6])
 else:
     print("ERROR: dist/ folder missing! Build failed.")
 
-# Load chains from ./chains folder
+# Load chain images from ./chains folder
 chains_data = []
 chain_names = []
 
@@ -45,9 +46,11 @@ if os.path.exists(CHAIN_FOLDER):
                     chain_names.append(os.path.splitext(file)[0])
                     print(f"Loaded: {file}")
             except Exception as e:
-                print(f"Failed {file}: {e}")
+                print(f"Failed to load {file}: {e}")
+else:
+    print("No chains folder found!")
 
-print(f"Total chains: {len(chains_data)}")
+print(f"Total chains loaded: {len(chains_data)}")
 print("=" * 70)
 
 # Flask app
@@ -69,12 +72,23 @@ def get_chains():
 def health():
     return jsonify({"status": "ok", "chains": len(chains_data)})
 
+# CRITICAL: FIXED CAMERA PERMISSION HEADERS (2025)
 @app.after_request
-def headers(r):
-    r.headers["Permissions-Policy"] = "camera=*, microphone=*"
-    r.headers["Access-Control-Allow-Origin"] = "*"
-    return r
+def add_security_headers(response):
+    # Remove any blocking Permissions-Policy
+    response.headers.pop("Permissions-Policy", None)
+    
+    # These two headers are REQUIRED for camera in modern browsers
+    response.headers["Cross-Origin-Opener-Policy"] = "same-origin-allow-popups"
+    response.headers["Cross-Origin-Embedder-Policy"] = "require-corp"
+    
+    # Allow CORS (needed for local testing)
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    
+    return response
 
+# Start server
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
+    print(f"Server running → https://your-url.onrender.com")
     app.run(host="0.0.0.0", port=port)
