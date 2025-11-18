@@ -3,11 +3,11 @@ Chain Fit Studio - Flask Backend (React Static SPA Version)
 Serves built React app from chains/dist/ + API endpoints
 """
 
-from flask import Flask, send_from_directory, jsonify, render_template  # ← render_template still imported (unused)
+from flask import Flask, send_from_directory, jsonify
 import os
 import base64
 
-app = Flask(__name__, static_folder='chains/dist', static_url_path='')  # ← Good: Points to dist
+app = Flask(__name__, static_folder='chains/dist', static_url_path='')
 
 # ================== CONFIG ==================
 CHAIN_FOLDER = "chains"
@@ -50,10 +50,11 @@ print("="*50)
 
 # ================== ROUTES ==================
 
-@app.route('/', defaults={'path': 'index.html'})  # ← Good: Root route
+@app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
-def serve(path):  # ← Good: Static serve function
-    if path != "" and os.path.exists(app.static_folder + '/' + path):  # ← Note: Uses + '/' + (works, but join better)
+def serve(path):
+    """Serve React static files with SPA fallback"""
+    if path != '' and os.path.exists(os.path.join(app.static_folder, path)):
         return send_from_directory(app.static_folder, path)
     else:
         return send_from_directory(app.static_folder, 'index.html')
@@ -82,12 +83,7 @@ def add_security_headers(response):
     response.headers['Access-Control-Allow-Origin'] = '*'
     return response
 
-# Error handlers  ← THIS SECTION IS STILL ACTIVE & CAUSING 404
-@app.errorhandler(404)  # ← PROBLEM: Catches everything, returns JSON error
-def not_found(e):
-    """Handle 404 errors"""
-    return jsonify({'error': 'Not found'}), 404
-
+# Error handlers (only 500, no 404 override for SPA)
 @app.errorhandler(500)
 def server_error(e):
     """Handle 500 errors"""
@@ -101,7 +97,7 @@ if __name__ == '__main__':
     print("="*50)
     print("\n🌐 Server will be available at:")
     print("   Local: http://localhost:5000")
-    print("   Production: https://your-app.onrender.com")
+    print("   Production: https://gold-chain-selection.onrender.com")  # ← Update with your Render URL
     print("\n📝 Features:")
     print("   ✓ Static React SPA serving")
     print("   ✓ Browser-based camera processing")
