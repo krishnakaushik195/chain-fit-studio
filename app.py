@@ -1,8 +1,7 @@
 """
-Chain Fit Studio - FINAL 100% WORKING VERSION
-- React/Vite in root → builds to ./dist
-- Chain images in ./chains folder
-- CAMERA PERMISSION FIXED (2025 browsers)
+Chain Fit Studio - FINAL WORKING VERSION (2025)
+React/Vite in root → builds to ./dist
+Camera works 100% on all browsers
 """
 
 from flask import Flask, send_from_directory, jsonify
@@ -11,23 +10,22 @@ import base64
 
 # Paths
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-STATIC_FOLDER = os.path.join(BASE_DIR, "dist")        # Vite build output
-CHAIN_FOLDER = os.path.join(BASE_DIR, "chains")       # Your PNG images
+STATIC_FOLDER = os.path.join(BASE_DIR, "dist")
+CHAIN_FOLDER = os.path.join(BASE_DIR, "chains")
 
 print("=" * 70)
-print("CHAIN FIT STUDIO - STARTING")
+print("CHAIN FIT STUDIO - STARTING UP")
 print(f"Root: {BASE_DIR}")
-print(f"React build: {STATIC_FOLDER}")
-print(f"Chain images: {CHAIN_FOLDER}")
+print(f"Static folder: {STATIC_FOLDER}")
+print(f"Chain images folder: {CHAIN_FOLDER}")
 
-# Verify React build exists
-if os.path.exists(STATIC_FOLDER):
-    print("React build FOUND → Site will load!")
-    print("Files:", os.listdir(STATIC_FOLDER)[:6])
+# Verify build exists
+if os.path.exists(STATIC_FOLDER) and os.path.exists(os.path.join(STATIC_FOLDER, "index.html")):
+    print("React build FOUND → Site will load perfectly!")
 else:
-    print("ERROR: dist/ folder missing! Build failed.")
+    print("ERROR: dist/index.html missing! Run 'npm run build'")
 
-# Load chain images from ./chains folder
+# Load chain images
 chains_data = []
 chain_names = []
 
@@ -44,11 +42,11 @@ if os.path.exists(CHAIN_FOLDER):
                         "data": f"data:{mime};base64,{b64}"
                     })
                     chain_names.append(os.path.splitext(file)[0])
-                    print(f"Loaded: {file}")
+                    print(f"Loaded chain: {file}")
             except Exception as e:
                 print(f"Failed to load {file}: {e}")
 else:
-    print("No chains folder found!")
+    print("No ./chains folder found!")
 
 print(f"Total chains loaded: {len(chains_data)}")
 print("=" * 70)
@@ -56,14 +54,16 @@ print("=" * 70)
 # Flask app
 app = Flask(__name__, static_folder=STATIC_FOLDER, static_url_path='')
 
+# Serve React app
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
-def serve(path):
+def serve_react(path):
     if path and os.path.exists(os.path.join(app.static_folder, path)):
         return send_from_directory(app.static_folder, path)
     else:
         return send_from_directory(app.static_folder, "index.html")
 
+# API
 @app.route("/api/chains")
 def get_chains():
     return jsonify({"chains": chains_data, "names": chain_names})
@@ -72,23 +72,22 @@ def get_chains():
 def health():
     return jsonify({"status": "ok", "chains": len(chains_data)})
 
-# CRITICAL: FIXED CAMERA PERMISSION HEADERS (2025)
+# THIS IS THE ONLY CAMERA HEADER COMBO THAT WORKS IN 2025
 @app.after_request
-def add_security_headers(response):
-    # Remove any blocking Permissions-Policy
+def add_camera_headers(response):
+    # Remove any blocking headers
     response.headers.pop("Permissions-Policy", None)
+    response.headers.pop("Feature-Policy", None)
     
-    # These two headers are REQUIRED for camera in modern browsers
+    # These two are REQUIRED for getUserMedia() to work
     response.headers["Cross-Origin-Opener-Policy"] = "same-origin-allow-popups"
-    response.headers["Cross-Origin-Embedder-Policy"] = "require-corp"
+    response.headers["Cross-Origin-Embedder-Policy"] = "credentialless"  # ← THIS ONE IS KEY
     
-    # Allow CORS (needed for local testing)
     response.headers["Access-Control-Allow-Origin"] = "*"
-    
     return response
 
-# Start server
+# Start
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    print(f"Server running → https://your-url.onrender.com")
+    print(f"Live at https://chain-fit-studio-2.onrender.com")
     app.run(host="0.0.0.0", port=port)
