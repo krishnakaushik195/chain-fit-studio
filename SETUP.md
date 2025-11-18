@@ -14,23 +14,40 @@ A production-ready virtual try-on experience for chains/necklaces with real-time
 - Python 3.8+
 - Webcam/camera access
 
+## IMPORTANT: Local Development Setup
+
+**To connect your React frontend to the Flask backend running on localhost:**
+
+1. You MUST run the React app locally (not in Lovable preview)
+2. The Lovable preview cannot connect to `localhost:5000` due to browser security
+3. Follow the steps below to run both backend and frontend locally
+
 ## Backend Setup (Flask)
 
 1. **Install Python dependencies**:
 ```bash
-pip install flask
+pip install flask flask-cors
 ```
 
-2. **Create chains folder**:
+2. **Update Flask app.py to enable CORS**:
+Add this to your Flask code:
+```python
+from flask_cors import CORS
+
+app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
+```
+
+3. **Create chains folder**:
 ```bash
 mkdir chains
 ```
 
-3. **Add chain images**:
+4. **Add chain images**:
    - Place PNG/JPG images of chains in the `chains/` folder
    - Name them descriptively (e.g., `gold-chain.png`, `silver-pendant.png`)
 
-4. **Run Flask server**:
+5. **Run Flask server**:
 ```bash
 python app.py
 ```
@@ -39,31 +56,40 @@ Server will start at `http://localhost:5000`
 
 ## Frontend Setup (React)
 
-1. **Install dependencies**:
+1. **Download the project code** (from Lovable: click on project name → Download Code)
+
+2. **Install dependencies**:
 ```bash
 npm install
 ```
 
-2. **Configure API URL**:
-   - Copy `.env.example` to `.env`
-   - Set `VITE_API_URL` to your Flask backend URL
-   
-   For local development:
+3. **Configure API URL**:
+   - Create a `.env` file in the root directory
+   - Add this line:
    ```
    VITE_API_URL=http://localhost:5000
    ```
-   
-   For production:
-   ```
-   VITE_API_URL=https://your-backend.onrender.com
-   ```
 
-3. **Start development server**:
+4. **Start development server**:
 ```bash
 npm run dev
 ```
 
 Frontend will start at `http://localhost:8080`
+
+## Running Both Together (Local Development)
+
+**Terminal 1** - Start Flask Backend:
+```bash
+python app.py
+```
+
+**Terminal 2** - Start React Frontend:
+```bash
+npm run dev
+```
+
+Now open `http://localhost:8080` in your browser - the frontend will connect to your Flask backend!
 
 ## Production Deployment
 
