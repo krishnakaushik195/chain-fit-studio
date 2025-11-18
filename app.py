@@ -1,93 +1,133 @@
 """
-Chain Fit Studio - FINAL WORKING VERSION (2025)
-React/Vite in root → builds to ./dist
-Camera works 100% on all browsers
+Chain Fit Studio - Production Flask Backend
+Serves React build + API endpoints
 """
 
 from flask import Flask, send_from_directory, jsonify
+from flask_cors import CORS
 import os
 import base64
 
-# Paths
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-STATIC_FOLDER = os.path.join(BASE_DIR, "dist")
-CHAIN_FOLDER = os.path.join(BASE_DIR, "chains")
+app = Flask(__name__, static_folder='dist', static_url_path='')
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-print("=" * 70)
-print("CHAIN FIT STUDIO - STARTING UP")
-print(f"Root: {BASE_DIR}")
-print(f"Static folder: {STATIC_FOLDER}")
-print(f"Chain images folder: {CHAIN_FOLDER}")
+# ================== CONFIG ==================
+CHAIN_FOLDER = "chains"
+os.makedirs(CHAIN_FOLDER, exist_ok=True)
 
-# Verify build exists
-if os.path.exists(STATIC_FOLDER) and os.path.exists(os.path.join(STATIC_FOLDER, "index.html")):
-    print("React build FOUND → Site will load perfectly!")
-else:
-    print("ERROR: dist/index.html missing! Run 'npm run build'")
-
-# Load chain images
 chains_data = []
 chain_names = []
 
-if os.path.exists(CHAIN_FOLDER):
-    for file in sorted(os.listdir(CHAIN_FOLDER)):
-        if file.lower().endswith(('.png', '.jpg', '.jpeg')):
-            path = os.path.join(CHAIN_FOLDER, file)
-            try:
-                with open(path, "rb") as f:
-                    b64 = base64.b64encode(f.read()).decode()
-                    mime = "image/png" if file.lower().endswith('.png') else "image/jpeg"
-                    chains_data.append({
-                        "name": os.path.splitext(file)[0],
-                        "data": f"data:{mime};base64,{b64}"
-                    })
-                    chain_names.append(os.path.splitext(file)[0])
-                    print(f"Loaded chain: {file}")
-            except Exception as e:
-                print(f"Failed to load {file}: {e}")
+print("="*50)
+print("CHAIN FIT STUDIO - Loading chains...")
+print("="*50)
+
+for file in sorted(os.listdir(CHAIN_FOLDER)):
+    if file.lower().endswith(('.png', '.jpg', '.jpeg')):
+        path = os.path.join(CHAIN_FOLDER, file)
+        try:
+            with open(path, 'rb') as f:
+                img_data = base64.b64encode(f.read()).decode()
+                ext = file.lower().split('.')[-1]
+                mime_type = f"image/{ext}" if ext in ['png', 'jpg', 'jpeg'] else "image/png"
+                
+                chains_data.append({
+                    'name': os.path.splitext(file)[0],
+                    'data': f"data:{mime_type};base64,{img_data}"
+                })
+                chain_names.append(os.path.splitext(file)[0])
+                print(f"   ✓ Loaded: {file}")
+        except Exception as e:
+            print(f"   ✗ Error loading {file}: {e}")
+
+if not chains_data:
+    print("\n⚠️  WARNING: No chain images found in 'chains/' folder!")
 else:
-    print("No ./chains folder found!")
+    print(f"\n✓ Total chains loaded: {len(chains_data)}\n")
 
-print(f"Total chains loaded: {len(chains_data)}")
-print("=" * 70)
+print("="*50)
 
-# Flask app
-app = Flask(__name__, static_folder=STATIC_FOLDER, static_url_path='')
+# ================== API ROUTES ==================
 
-# Serve React app
-@app.route("/", defaults={"path": ""})
-@app.route("/<path:path>")
+@app.route('/api/chains', methods=['GET'])
+def get_chains():
+    """API endpoint to get all chain images"""
+    return jsonify({
+        'success': True,
+        'chains': chains_data,
+        'names': chain_names,
+        'count': len(chains_data)
+    })
+
+@app.route('/api/health', methods=['GET'])
+def health():
+    """Health check endpoint"""
+    return jsonify({
+        'status': 'healthy',
+        'chains_loaded': len(chains_data),
+        'version': '2.0'
+    })
+
+# ================== SERVE REACT APP ==================
+
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
 def serve_react(path):
-    if path and os.path.exists(os.path.join(app.static_folder, path)):
+    """Serve React app"""
+    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
         return send_from_directory(app.static_folder, path)
     else:
-        return send_from_directory(app.static_folder, "index.html")
+        return send_from_directory(app.static_folder, 'index.html')
 
-# API
-@app.route("/api/chains")
-def get_chains():
-    return jsonify({"chains": chains_data, "names": chain_names})
+# ================== SECURITY HEADERS ==================
 
-@app.route("/health")
-def health():
-    return jsonify({"status": "ok", "chains": len(chains_data)})
-
-# THIS IS THE ONLY CAMERA HEADER COMBO THAT WORKS IN 2025
 @app.after_request
-def add_camera_headers(response):
-    # Remove any blocking headers
-    response.headers.pop("Permissions-Policy", None)
-    response.headers.pop("Feature-Policy", None)
+def add_security_headers(response):
+    """Add security headers for camera access and CORS"""
+    response.headers['Permissions-Policy'] = 'camera=*, microphone=*'
+    response.headers['Cross-Origin-Opener-Policy'] = 'same-origin'
+    response.headers['Cross-Origin-Embedder-Policy'] = 'require-corp'
     
-    # These two are REQUIRED for getUserMedia() to work
-    response.headers["Cross-Origin-Opener-Policy"] = "same-origin-allow-popups"
-    response.headers["Cross-Origin-Embedder-Policy"] = "credentialless"  # ← THIS ONE IS KEY
+    # CORS headers for API routes
+    if response.headers.get('Content-Type', '').startswith('application/json'):
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
     
-    response.headers["Access-Control-Allow-Origin"] = "*"
     return response
 
-# Start
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    print(f"Live at https://chain-fit-studio-2.onrender.com")
-    app.run(host="0.0.0.0", port=port)
+# ================== ERROR HANDLERS ==================
+
+@app.errorhandler(404)
+def not_found(e):
+    # For API routes, return JSON
+    if '/api/' in str(e):
+        return jsonify({'error': 'Not found'}), 404
+    # For other routes, serve React app (SPA routing)
+    return send_from_directory(app.static_folder, 'index.html')
+
+@app.errorhandler(500)
+def server_error(e):
+    return jsonify({'error': 'Internal server error', 'message': str(e)}), 500
+
+# ================== MAIN ==================
+
+if __name__ == '__main__':
+    print("\n" + "="*50)
+    print("CHAIN FIT STUDIO - PRODUCTION SERVER")
+    print("="*50)
+    print("\n📦 Mode: React + Flask")
+    print(f"📁 Serving from: {app.static_folder}")
+    print(f"🔗 API available at: /api/chains")
+    
+    port = int(os.environ.get('PORT', 5000))
+    
+    print(f"\n🌐 Server starting on port {port}...")
+    print("="*50 + "\n")
+    
+    app.run(
+        debug=False,
+        threaded=True,
+        host='0.0.0.0',
+        port=port
+    )
