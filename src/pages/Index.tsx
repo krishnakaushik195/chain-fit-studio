@@ -1,14 +1,33 @@
 import { useState } from "react";
 import { CameraView } from "@/components/CameraView";
 import { ChainGallery } from "@/components/ChainGallery";
+import { AdjustmentControls } from "@/components/AdjustmentControls";
 import { useChains } from "@/hooks/useChains";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
-  const [selectedChain, setSelectedChain] = useState<string | null>(null);
+  const [selectedChainIndex, setSelectedChainIndex] = useState<number | null>(null);
+  const [chainSize, setChainSize] = useState(1.0);
+  const [verticalPosition, setVerticalPosition] = useState(0.2);
   const { data, isLoading, error } = useChains();
   const { toast } = useToast();
+
+  const selectedChain = selectedChainIndex !== null && data?.chains[selectedChainIndex]
+    ? data.chains[selectedChainIndex].data
+    : null;
+
+  const handlePrevious = () => {
+    if (selectedChainIndex !== null && selectedChainIndex > 0) {
+      setSelectedChainIndex(selectedChainIndex - 1);
+    }
+  };
+
+  const handleNext = () => {
+    if (selectedChainIndex !== null && data?.chains && selectedChainIndex < data.chains.length - 1) {
+      setSelectedChainIndex(selectedChainIndex + 1);
+    }
+  };
 
   const handleCapture = (imageData: string) => {
     toast({
@@ -38,11 +57,13 @@ const Index = () => {
           <CameraView
             selectedChain={selectedChain}
             onCapture={handleCapture}
+            chainSize={chainSize}
+            verticalPosition={verticalPosition}
           />
         </div>
 
         {/* Chain Gallery Sidebar */}
-        <aside className="w-full md:w-80 border-t md:border-t-0 md:border-l border-border bg-card">
+        <aside className="w-full md:w-80 border-t md:border-t-0 md:border-l border-border bg-card flex flex-col">
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
               <Loader2 className="w-8 h-8 text-gold animate-spin" />
@@ -57,11 +78,23 @@ const Index = () => {
               </div>
             </div>
           ) : (
-            <ChainGallery
-              chains={data?.chains || []}
-              selectedChain={selectedChain}
-              onSelectChain={setSelectedChain}
-            />
+            <>
+              <div className="flex-1 overflow-hidden">
+                <ChainGallery
+                  chains={data?.chains || []}
+                  selectedChainIndex={selectedChainIndex}
+                  onSelectChain={setSelectedChainIndex}
+                  onPrevious={handlePrevious}
+                  onNext={handleNext}
+                />
+              </div>
+              <AdjustmentControls
+                chainSize={chainSize}
+                verticalPosition={verticalPosition}
+                onChainSizeChange={setChainSize}
+                onVerticalPositionChange={setVerticalPosition}
+              />
+            </>
           )}
         </aside>
       </div>

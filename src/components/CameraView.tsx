@@ -7,9 +7,16 @@ import { Camera as CameraIcon, Download, AlertCircle } from "lucide-react";
 interface CameraViewProps {
   selectedChain: string | null;
   onCapture?: (imageData: string) => void;
+  chainSize?: number;
+  verticalPosition?: number;
 }
 
-export const CameraView = ({ selectedChain, onCapture }: CameraViewProps) => {
+export const CameraView = ({ 
+  selectedChain, 
+  onCapture, 
+  chainSize = 1.0, 
+  verticalPosition = 0.2 
+}: CameraViewProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chainImageRef = useRef<HTMLImageElement | null>(null);
@@ -121,9 +128,11 @@ export const CameraView = ({ selectedChain, onCapture }: CameraViewProps) => {
 
       if (chinCenter && leftJaw && rightJaw) {
         const neckCenterX = chinCenter.x * canvas.width;
-        const neckCenterY = chinCenter.y * canvas.height + 40; // Offset below chin
+        const baseOffset = chinCenter.y * canvas.height + 40;
+        const neckCenterY = baseOffset + (verticalPosition * 100); // Apply vertical adjustment
         
-        const neckWidth = Math.abs(rightJaw.x - leftJaw.x) * canvas.width * 1.2;
+        const baseNeckWidth = Math.abs(rightJaw.x - leftJaw.x) * canvas.width * 1.2;
+        const neckWidth = baseNeckWidth * chainSize; // Apply size adjustment
         const chainHeight = (chainImageRef.current.height / chainImageRef.current.width) * neckWidth;
 
         ctx.globalAlpha = 0.9;
