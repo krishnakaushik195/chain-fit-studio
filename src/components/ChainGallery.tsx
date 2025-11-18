@@ -36,8 +36,8 @@ export const ChainGallery = ({
   return (
     <div className="h-full flex flex-col">
       <ScrollArea className="flex-1">
-        <div className="p-4 space-y-3">
-          <h3 className="text-sm font-semibold text-gold uppercase tracking-wider mb-4">
+        <div className="p-2 md:p-4 space-y-2 md:space-y-3">
+          <h3 className="text-xs md:text-sm font-semibold text-gold uppercase tracking-wider mb-2 md:mb-4 px-1">
             Select Chain
           </h3>
           {chains.map((chain, index) => (
@@ -45,21 +45,21 @@ export const ChainGallery = ({
               key={index}
               onClick={() => onSelectChain(index)}
               className={cn(
-                "w-full p-4 rounded-lg border-2 transition-all hover:scale-105",
-                "bg-card hover:bg-secondary",
+                "w-full p-2 md:p-4 rounded-lg border-2 transition-all active:scale-95 md:hover:scale-105",
+                "bg-card active:bg-secondary md:hover:bg-secondary",
                 selectedChainIndex === index
                   ? "border-gold shadow-lg shadow-gold/20"
-                  : "border-border hover:border-gold/50"
+                  : "border-border active:border-gold/50 md:hover:border-gold/50"
               )}
             >
-              <div className="aspect-square relative mb-2 bg-background rounded-md overflow-hidden">
+              <div className="aspect-square relative mb-1 md:mb-2 bg-background rounded-md overflow-hidden">
                 <img
                   src={chain.data}
                   alt={chain.name}
                   className="w-full h-full object-contain"
                 />
               </div>
-              <p className="text-sm font-medium text-foreground truncate">
+              <p className="text-xs md:text-sm font-medium text-foreground truncate">
                 {chain.name}
               </p>
             </button>
@@ -67,18 +67,18 @@ export const ChainGallery = ({
         </div>
       </ScrollArea>
 
-      {/* Navigation Controls */}
+      {/* Navigation Controls - Mobile optimized */}
       {hasMultipleChains && (
-        <div className="p-4 border-t border-border">
+        <div className="p-2 md:p-4 border-t border-border shrink-0">
           <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={onPrevious}
               disabled={selectedChainIndex === null || selectedChainIndex === 0}
-              className="flex-1"
+              className="flex-1 text-xs md:text-sm h-8 md:h-9"
             >
-              <ChevronLeft className="w-4 h-4 mr-1" />
+              <ChevronLeft className="w-3 h-3 md:w-4 md:h-4 mr-1" />
               Previous
             </Button>
             <Button
@@ -86,10 +86,10 @@ export const ChainGallery = ({
               size="sm"
               onClick={onNext}
               disabled={selectedChainIndex === null || selectedChainIndex === chains.length - 1}
-              className="flex-1"
+              className="flex-1 text-xs md:text-sm h-8 md:h-9"
             >
               Next
-              <ChevronRight className="w-4 h-4 ml-1" />
+              <ChevronRight className="w-3 h-3 md:w-4 md:h-4 ml-1" />
             </Button>
           </div>
         </div>

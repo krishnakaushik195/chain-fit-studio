@@ -15,22 +15,22 @@ export const AdjustmentControls = ({
   onVerticalPositionChange,
 }: AdjustmentControlsProps) => {
   return (
-    <div className="p-4 bg-card border-t border-border space-y-4">
-      <div className="flex items-center gap-2 mb-4">
-        <Settings className="w-4 h-4 text-gold" />
-        <h3 className="text-sm font-semibold text-gold uppercase tracking-wider">
+    <div className="p-2 md:p-4 bg-card border-t border-border space-y-2 md:space-y-4">
+      <div className="flex items-center gap-2 mb-2 md:mb-4">
+        <Settings className="w-3 h-3 md:w-4 md:h-4 text-gold" />
+        <h3 className="text-xs md:text-sm font-semibold text-gold uppercase tracking-wider">
           Adjustments
         </h3>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-2 md:space-y-3">
         {/* Chain Size */}
         <div>
-          <div className="flex justify-between items-center mb-2">
-            <label className="text-sm font-medium text-foreground">
+          <div className="flex justify-between items-center mb-1 md:mb-2">
+            <label className="text-xs md:text-sm font-medium text-foreground">
               Chain Size
             </label>
-            <span className="text-sm text-muted-foreground">
+            <span className="text-xs md:text-sm text-muted-foreground font-mono">
               {chainSize.toFixed(1)}x
             </span>
           </div>
@@ -46,19 +46,19 @@ export const AdjustmentControls = ({
 
         {/* Vertical Position */}
         <div>
-          <div className="flex justify-between items-center mb-2">
-            <label className="text-sm font-medium text-foreground">
+          <div className="flex justify-between items-center mb-1 md:mb-2">
+            <label className="text-xs md:text-sm font-medium text-foreground">
               Vertical Position
             </label>
-            <span className="text-sm text-muted-foreground">
+            <span className="text-xs md:text-sm text-muted-foreground font-mono">
               {verticalPosition.toFixed(2)}
             </span>
           </div>
           <Slider
             value={[verticalPosition]}
             onValueChange={(values) => onVerticalPositionChange(values[0])}
-            min={-0.5}
-            max={0.5}
+            min={-1.0}
+            max={1.5}
             step={0.05}
             className="w-full"
           />

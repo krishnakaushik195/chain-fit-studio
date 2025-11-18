@@ -74,15 +74,17 @@ export const CameraView = ({
         faceMesh.onResults(onResults);
         faceMeshRef.current = faceMesh;
 
-        // Initialize Camera
+        // Initialize Camera with mobile-optimized settings
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         const camera = new Camera(videoRef.current, {
           onFrame: async () => {
             if (faceMeshRef.current && videoRef.current) {
               await faceMeshRef.current.send({ image: videoRef.current });
             }
           },
-          width: 1280,
-          height: 720,
+          width: isMobile ? 640 : 1280,
+          height: isMobile ? 480 : 720,
+          facingMode: 'user', // Front camera for mobile
         });
 
         cameraRef.current = camera;
@@ -182,44 +184,46 @@ export const CameraView = ({
         className="hidden"
         playsInline
         autoPlay
+        muted
       />
 
-      {/* Canvas for rendering */}
+      {/* Canvas for rendering - Mobile optimized */}
       <canvas
         ref={canvasRef}
-        className={`max-w-full max-h-full object-contain ${isCameraReady ? 'block' : 'hidden'}`}
+        className={`max-w-full max-h-full w-auto h-auto object-contain ${isCameraReady ? 'block' : 'hidden'}`}
       />
 
       {/* Loading State */}
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-          <div className="text-center">
-            <CameraIcon className="w-12 h-12 text-gold animate-pulse mx-auto mb-4" />
-            <p className="text-foreground text-lg font-medium">Initializing camera...</p>
+          <div className="text-center px-4">
+            <CameraIcon className="w-10 h-10 md:w-12 md:h-12 text-gold animate-pulse mx-auto mb-3 md:mb-4" />
+            <p className="text-foreground text-base md:text-lg font-medium">Initializing camera...</p>
           </div>
         </div>
       )}
 
       {/* Error State */}
       {error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-          <div className="text-center max-w-md px-4">
-            <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-            <p className="text-foreground text-lg font-medium mb-2">Camera Access Required</p>
-            <p className="text-muted-foreground">{error}</p>
+        <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+          <div className="text-center max-w-md">
+            <AlertCircle className="w-10 h-10 md:w-12 md:h-12 text-destructive mx-auto mb-3 md:mb-4" />
+            <p className="text-foreground text-base md:text-lg font-medium mb-2">Camera Access Required</p>
+            <p className="text-muted-foreground text-sm md:text-base">{error}</p>
+            <p className="text-xs md:text-sm text-muted-foreground mt-2">Please allow camera access in your browser settings</p>
           </div>
         </div>
       )}
 
-      {/* Capture Button */}
+      {/* Capture Button - Mobile optimized */}
       {isCameraReady && !error && (
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
+        <div className="absolute bottom-4 md:bottom-8 left-1/2 -translate-x-1/2">
           <Button
             onClick={handleCapture}
             size="lg"
-            className="bg-gold hover:bg-gold-muted text-background font-semibold gap-2 shadow-lg"
+            className="bg-gold hover:bg-gold-muted text-background font-semibold gap-2 shadow-lg text-sm md:text-base px-4 md:px-6"
           >
-            <Download className="w-5 h-5" />
+            <Download className="w-4 h-4 md:w-5 md:h-5" />
             Capture
           </Button>
         </div>
