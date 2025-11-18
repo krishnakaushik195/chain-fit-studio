@@ -3,11 +3,11 @@ Chain Fit Studio - Flask Backend (React Static SPA Version)
 Serves built React app from chains/dist/ + API endpoints
 """
 
-from flask import Flask, send_from_directory, jsonify
+from flask import Flask, send_from_directory, jsonify, render_template  # ← render_template still imported (unused)
 import os
 import base64
 
-app = Flask(__name__, static_folder='chains/dist', static_url_path='')
+app = Flask(__name__, static_folder='chains/dist', static_url_path='')  # ← Good: Points to dist
 
 # ================== CONFIG ==================
 CHAIN_FOLDER = "chains"
@@ -50,11 +50,10 @@ print("="*50)
 
 # ================== ROUTES ==================
 
-@app.route('/', defaults={'path': 'index.html'})
+@app.route('/', defaults={'path': 'index.html'})  # ← Good: Root route
 @app.route('/<path:path>')
-def serve(path):
-    """Serve React static files with SPA fallback"""
-    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+def serve(path):  # ← Good: Static serve function
+    if path != "" and os.path.exists(app.static_folder + '/' + path):  # ← Note: Uses + '/' + (works, but join better)
         return send_from_directory(app.static_folder, path)
     else:
         return send_from_directory(app.static_folder, 'index.html')
@@ -83,8 +82,8 @@ def add_security_headers(response):
     response.headers['Access-Control-Allow-Origin'] = '*'
     return response
 
-# Error handlers
-@app.errorhandler(404)
+# Error handlers  ← THIS SECTION IS STILL ACTIVE & CAUSING 404
+@app.errorhandler(404)  # ← PROBLEM: Catches everything, returns JSON error
 def not_found(e):
     """Handle 404 errors"""
     return jsonify({'error': 'Not found'}), 404
